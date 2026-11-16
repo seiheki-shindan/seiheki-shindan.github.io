@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="description" content="50問に5段階で答えて、あなたの夜の惹かれ方を16タイプで診断します。18歳以上向け。">
+<meta property="og:title" content="性癖タイプ診断">
+<meta property="og:description" content="50問に5段階で答えて、あなたの夜の惹かれ方を16タイプで診断します。18歳以上向け。">
+<meta property="og:type" content="website">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>診断の管理画面</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* Layout: one narrow column like a questionnaire card stack; result reads like a profile sheet; admin view is a plain ledger. */
+:root {
+  --bg: #f6f2f4;
+  --surface: #ffffff;
+  --fg: #2a1f27;
+  --muted: #74656f;
+  --line: #e4d9df;
+  --accent: #8c2f5b;
+  --accent-soft: #f3e1ea;
+  --axis: #2f6f73;
+  --axis-soft: #dcecec;
+  --display: "Shippori Mincho B1", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #1b1519; --surface: #261e23; --fg: #f1e8ed; --muted: #b3a2ac; --line: #3d3138;
+  --accent: #e58bb4; --accent-soft: #3d2531; --axis: #7fc6c9; --axis-soft: #1f3536; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #1b1519; --surface: #261e23; --fg: #f1e8ed; --muted: #b3a2ac; --line: #3d3138;
+  --accent: #e58bb4; --accent-soft: #3d2531; --axis: #7fc6c9; --axis-soft: #1f3536; color-scheme: dark }
+
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.75; }
+.wrap { max-width: 680px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 20px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.35; }
+h1 { font-size: 30px; font-weight: 800; }
+h2 { font-size: 22px; }
+p { margin: 0; }
+.eyebrow { font-size: 12px; letter-spacing: .12em; color: var(--accent); font-weight: 700; }
+.muted { color: var(--muted); font-size: 13px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+.tabs { display: flex; gap: 8px; }
+.tab { border: 1px solid var(--line); background: var(--surface); color: var(--fg); padding: 6px 14px; border-radius: 999px; font: inherit; font-size: 13px; cursor: pointer; }
+.tab[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+button.primary { background: var(--accent); color: #fff; border: 0; border-radius: 10px; padding: 12px 20px; font: inherit; font-weight: 700; cursor: pointer; }
+:root[data-theme="dark"] button.primary { color: #1b1519; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) button.primary { color: #1b1519; } }
+button.primary:disabled { opacity: .45; cursor: not-allowed; }
+button.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); border-radius: 10px; padding: 10px 18px; font: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible, label:focus-within { outline: 2px solid var(--axis); outline-offset: 2px; }
+.check { display: flex; gap: 10px; align-items: flex-start; }
+.check input { margin-top: 6px; width: 18px; height: 18px; accent-color: var(--accent); }
+ul.plain { margin: 0; padding-left: 1.2em; }
+
+/* Questions */
+.progress { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.progress > div { height: 100%; background: var(--accent); transition: width .2s; }
+.q { display: flex; flex-direction: column; gap: 12px; padding-block: 16px; border-bottom: 1px solid var(--line); }
+.q:last-child { border-bottom: 0; }
+.q-text { font-weight: 500; }
+.q-num { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.scale { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; }
+.scale .end { font-size: 11px; color: var(--muted); width: 4.5em; }
+.scale .end.r { text-align: right; }
+.dots { display: flex; justify-content: space-between; align-items: center; }
+.dot { position: relative; }
+.dot input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.dot span { display: block; border: 2px solid var(--accent); border-radius: 50%; transition: background .12s; }
+.dot:nth-child(1) span, .dot:nth-child(5) span { width: 38px; height: 38px; }
+.dot:nth-child(2) span, .dot:nth-child(4) span { width: 30px; height: 30px; }
+.dot:nth-child(3) span { width: 24px; height: 24px; border-color: var(--muted); }
+.dot input:checked + span { background: var(--accent); }
+.dot:nth-child(3) input:checked + span { background: var(--muted); }
+.dot input:focus-visible + span { outline: 2px solid var(--axis); outline-offset: 3px; }
+
+/* Result */
+.code { font-family: var(--display); font-size: 15px; letter-spacing: .3em; color: var(--accent); font-weight: 800; }
+.type-name { font-size: 32px; font-weight: 800; }
+.axis { display: flex; flex-direction: column; gap: 4px; }
+.axis-head { display: flex; justify-content: space-between; font-size: 13px; }
+.axis-head b { color: var(--axis); }
+.bar { position: relative; height: 10px; background: var(--axis-soft); border-radius: 99px; }
+.bar .mid { position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--muted); }
+.bar .pin { position: absolute; top: 50%; width: 16px; height: 16px; border-radius: 50%; background: var(--axis); transform: translate(-50%, -50%); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { background: var(--accent-soft); color: var(--accent); border-radius: 999px; padding: 3px 12px; font-size: 13px; }
+.notice { font-size: 13px; padding: 10px 14px; border-radius: 10px; background: var(--axis-soft); color: var(--fg); }
+
+/* Admin */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+.stat b { display: block; font-size: 26px; font-family: var(--display); font-variant-numeric: tabular-nums; }
+.dist { display: flex; flex-direction: column; gap: 6px; }
+.dist-row { display: grid; grid-template-columns: 13em 1fr 2.5em; gap: 10px; align-items: center; font-size: 13px; }
+.dist-row .track { height: 12px; background: var(--line); border-radius: 4px; overflow: hidden; }
+.dist-row .fill { height: 100%; background: var(--accent); }
+.dist-row .n { text-align: right; font-variant-numeric: tabular-nums; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; min-width: 720px; }
+th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; font-variant-numeric: tabular-nums; }
+th { color: var(--muted); font-weight: 500; }
+.hero-art { display: flex; justify-content: center; }
+.hero-art svg { max-width: 100%; height: auto; }
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+.g-item { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; font-size: 12px; }
+.g-item svg { width: 100%; max-width: 120px; height: auto; }
+.g-item b { font-family: var(--display); font-size: 13px; }
+details summary { cursor: pointer; color: var(--accent); font-weight: 700; }
+.dist-row .who { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.dist-row .who svg { flex: none; }
+@media (max-width: 480px) { .dist-row { grid-template-columns: 8em 1fr 2em; } .type-name { font-size: 27px; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:10px">
+    <div class="eyebrow">ADMIN</div>
+    <h1>性癖タイプ診断 管理画面</h1>
+  </header>
+  <form class="card" id="login">
+    <label for="key">管理者キー</label>
+    <input id="key" type="password" autocomplete="current-password" style="font:inherit;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg)">
+    <div><button class="primary" type="submit">結果を見る</button></div>
+  </form>
+  <section id="view-admin"></section>
+</div>
+
+<script>
+const AXES = [
+  { key: "LF", a: "L", b: "F", aName: "リード", bName: "フォロー", label: "主導" },
+  { key: "WS", a: "W", b: "S", aName: "見ていたい", bName: "見られたい", label: "視線" },
+  { key: "PR", a: "P", b: "R", aName: "パーツ・五感", bName: "関係・物語", label: "惹かれどころ" },
+  { key: "TI", a: "T", b: "I", aName: "甘く優しく", bName: "強く刺激的に", label: "温度" },
+];
+
+// dir +1: agreeing pushes toward pole a; -1 toward pole b.
+const AXIS_Q = {
+  LF: [
+    [1, "ベッドでは、自分がリードして流れを決めたい。"],
+    [-1, "相手に押し倒されるような展開にドキッとする。"],
+    [1, "相手が感じている顔を見ると、もっと攻めたくなる。"],
+    [-1, "「じっとしてて」と言われたら、素直に従いたい。"],
+    [1, "焦らして、相手からおねだりさせたい。"],
+    [-1, "主導権を握られて、されるがままになりたいときがある。"],
+    [1, "相手を自分の思いどおりに乱してみたい。"],
+    [-1, "耳元で命令されると弱い。"],
+    [1, "キスは自分から仕掛けることが多い。"],
+    [-1, "自分から求めるより、求められて応えるほうが燃える。"],
+  ],
+  WS: [
+    [1, "最中は、相手の表情や反応をじっくり見ていたい。"],
+    [-1, "乱れた自分の姿を見られることに興奮する。"],
+    [1, "相手が服を脱いでいくところを眺めるのが好きだ。"],
+    [-1, "明るい部屋で、見られながらするのも悪くない。"],
+    [1, "相手の体を、隅々まで目で味わいたい。"],
+    [-1, "「きれい」「えっち」と言われながら見つめられたい。"],
+    [1, "自分が声を出すより、相手の声を聞いていたい。"],
+    [-1, "セクシーな下着や服で、相手を誘ってみたい。"],
+    [1, "相手がひとりで気持ちよくなっているところを見せてもらいたい。"],
+    [-1, "自分の声や反応で、相手を興奮させたい。"],
+  ],
+  PR: [
+    [1, "首筋、鎖骨、手など、触れたくなる体のパーツがはっきりある。"],
+    [-1, "体の相性より、気持ちが通じ合っているかが大事だ。"],
+    [1, "相手の肌の感触や体温に強く興奮する。"],
+    [-1, "「好き」と言われながらだと、何倍も感じる。"],
+    [1, "下着の素材やストッキングなど、身につけるものに惹かれる。"],
+    [-1, "恋人同士より、秘密の関係のような背徳的な設定に燃える。"],
+    [1, "声や息づかいだけで、ドキドキしてしまう。"],
+    [-1, "独占欲や嫉妬をぶつけられると、求められている気がして興奮する。"],
+    [1, "好みの見た目のポイントがあれば、それだけでスイッチが入る。"],
+    [-1, "行為そのものより、そこに至るまでの雰囲気や駆け引きに興奮する。"],
+  ],
+  TI: [
+    [1, "ゆっくり時間をかけた、甘いスキンシップがいちばん好きだ。"],
+    [-1, "少し乱暴なくらい激しいほうが燃える。"],
+    [1, "終わったあとに抱き合って、まったりする時間が大事だ。"],
+    [-1, "軽く噛まれる、髪をつかまれるなどの刺激が好きだ。"],
+    [1, "痛みや強い刺激は、できればないほうがいい。"],
+    [-1, "旅先のホテルなど、いつもと違う場所でのスリルに惹かれる。"],
+    [1, "安心できる相手と場所でないと、楽しめない。"],
+    [-1, "目隠しや拘束など、普段と違うプレイを試してみたい。"],
+    [1, "激しさより、丁寧に大切に扱われるほうが感じる。"],
+    [-1, "限界まで攻める、攻められるような体験をしてみたい。"],
+  ],
+};
+
+// One item per point of interest; shown as 刺さりポイント on the result.
+const FETISHES = [
+  ["voice", "声・言葉責め", "耳元でささやかれたり、言葉で責められたりすると興奮する。"],
+  ["scent", "匂い", "相手の匂いをかぐと、それだけでスイッチが入る。"],
+  ["kiss", "キス", "キスだけで長い時間を過ごせるくらい、キスが好きだ。"],
+  ["clothes", "服装・ランジェリー", "スーツ、白衣、ランジェリーなど、特定の服装にそそられる。"],
+  ["bondage", "拘束・目隠し", "縛る・縛られる、目隠しをするなどのプレイにそそられる。"],
+  ["pain", "痛みのある刺激", "噛む、叩くなど、痛みをともなう刺激に興奮する。"],
+  ["roleplay", "ロールプレイ", "上司と部下、客と店員のような設定を、二人で演じてみたい。"],
+  ["toys", "大人のおもちゃ", "大人のおもちゃを使ってみたい、または使うのが好きだ。"],
+  ["thrill", "バレるかもしれないスリル", "誰かに気づかれるかもしれない、という状況を想像すると興奮する。"],
+  ["multi", "複数人", "3人以上でのプレイを想像すると興奮する。"],
+];
+
+// 50 questions: axis questions round-robin, a point-of-interest item after every 4.
+const QUESTIONS = (() => {
+  const out = [];
+  let f = 0;
+  for (let i = 0; i < 10; i++) {
+    for (const k of ["LF", "WS", "PR", "TI"]) out.push([k, AXIS_Q[k][i][0], AXIS_Q[k][i][1]]);
+    const [id, , text] = FETISHES[f++];
+    out.push(["F:" + id, 0, text]);
+  }
+  return out;
+})();
+
+const AXIS_TEXT = {
+  L: "ベッドでは自分が流れを作るタイプです。相手の反応を引き出し、焦らしたり乱したりしながら、それを受け止める余裕があるときにいちばん満たされます。",
+  F: "委ねることで深く没頭できるタイプです。押し倒される、命令されるなど、主導権を握られる展開に弱く、求められて応えるときに火がつきます。",
+  W: "視線が外向きで、相手の表情や声、脱いでいく姿をじっくり味わうことに興奮します。相手が感じている様子そのものがごちそうです。",
+  S: "見られること、求められることで気持ちが高まります。誘う服や乱れた姿を見せることも、あなたにとっては楽しみの一部です。",
+  P: "スイッチがはっきりしていて、肌の感触、体温、声、身につけるものなど、具体的な「ここに弱い」を持っています。",
+  R: "誰と、どんな関係で、どんな気持ちで抱き合うかに興奮します。好きと言われること、嫉妬や背徳感、そこに至るまでの駆け引きが最高のスパイスです。",
+  T: "安心感と甘さの中でいちばん感じるタイプです。時間をかけたスキンシップと、終わったあとのまったりした時間まで含めて大切にします。",
+  I: "強さや非日常のスリルに燃えるタイプです。少し乱暴なくらいの激しさや、目隠し・拘束のような普段と違うプレイに惹かれます。",
+};
+
+const TYPES = {
+  LWPT: ["慈しむ鑑定士", "好きなところを、時間をかけて優しく味わい尽くす人。", ["焦らし", "全身リップ", "手・指フェチ", "声フェチ"]],
+  LWPI: ["審美の支配者", "相手の弱いところを見抜き、主導権ごと楽しむ人。", ["言葉責め", "焦らし", "パーツフェチ", "目隠し"]],
+  LWRT: ["包み込む演出家", "相手の心と体がほどけていく過程を、そっと導く人。", ["甘やかし", "年上の余裕", "愛の言葉", "まったりピロートーク"]],
+  LWRI: ["物語を操る黒幕", "駆け引きと揺れる感情を、自分の手で支配したい人。", ["主従関係", "独占欲", "おねだりさせたい", "背徳感"]],
+  LSPT: ["甘く魅せる主役", "自分の色気で相手をとろけさせ、優しくリードする人。", ["見つめ合い", "誘惑", "香り", "スキンシップ"]],
+  LSPI: ["挑発するカリスマ", "見せつけることも前戯にする、大胆な攻め手。", ["挑発", "ランジェリー", "S寄り", "非日常"]],
+  LSRT: ["愛を注ぐ主人公", "求められる喜びを、まっすぐな愛情と体で返す人。", ["一途", "愛の言葉", "包容力", "記念日えっち"]],
+  LSRI: ["情熱の独裁者", "強い想いで相手を引き寄せ、離さない人。", ["独占欲", "嫉妬", "強引さ", "所有されたいを満たす"]],
+  FWPT: ["静かな観察者", "委ねながらも、相手の好きなところをじっと味わっている人。", ["声フェチ", "手・指フェチ", "仕草フェチ", "ゆっくり"]],
+  FWPI: ["刺激の探究者", "委ねた先にある、強い感覚や新しい刺激を探している人。", ["拘束", "目隠し", "M寄り", "おもちゃ"]],
+  FWRT: ["夢見るロマンチスト", "二人の関係が深まっていく物語ごと、体で感じたい人。", ["純愛", "初めての夜", "愛の言葉", "年上の包容"]],
+  FWRI: ["背徳を味わう読み手", "ままならない関係や揺れる感情に、強く体が反応する人。", ["背徳感", "秘密の関係", "嫉妬", "身分差"]],
+  FSPT: ["愛でられ上手", "見つめられ、褒められ、大切に触れられることで輝く人。", ["褒められたい", "甘やかされ", "全身を愛でられる", "見つめ合い"]],
+  FSPI: ["翻弄されたい挑戦者", "強く求められ、めちゃくちゃにされることにときめく人。", ["M寄り", "言葉責め", "強引さ", "羞恥"]],
+  FSRT: ["甘えたがりの献身家", "相手に委ね、尽くし、愛されながら抱かれたい人。", ["甘えたい", "一途", "包まれたい", "ラブラブ"]],
+  FSRI: ["身を委ねる情熱家", "強い想いを向けられ、心も体も全部預けたい人。", ["独占されたい", "重い愛", "主従関係", "ブラット(生意気)"]],
+};
+
+// ---- Type illustrations: a different animal per type, drawn in a slightly grown-up style ----
+// Animal + color carry the type; axes add cues: L/F = smirk vs parted lips, W/S = sharp gaze vs closed sultry eyes,
+// neck accessory: L+T bow tie, L+I loosened necktie, F+T ribbon choker, F+I ring choker. Each type also holds an item.
+const INK = "#2e2230";
+const MASCOT = {
+  LWPT: { animal: "owl",     body: "#c99a7a", sub: "#f1dcc8", bg: "#f3e6dc", item: "magnifier" },
+  LWPI: { animal: "cat",     body: "#35293a", sub: "#4a3c50", bg: "#e4dbe8", item: "rose", dark: true },
+  LWRT: { animal: "bear",    body: "#a8754f", sub: "#e6c9a8", bg: "#f2e4d6", item: "wand" },
+  LWRI: { animal: "fox",     body: "#d4692b", sub: "#fbeee2", bg: "#f6dfd0", item: "mask" },
+  LSPT: { animal: "lion",    body: "#e6b45c", sub: "#b9702e", bg: "#f7ead0", item: "mirror" },
+  LSPI: { animal: "dragon",  body: "#c23b3b", sub: "#f0b16a", bg: "#f3d9d6", item: "flame" },
+  LSRT: { animal: "dog",     body: "#e3b77a", sub: "#9c6a3d", bg: "#f6ead9", item: "heart" },
+  LSRI: { animal: "wolf",    body: "#6f7489", sub: "#d9dbe3", bg: "#e1e3ea", item: "lockheart" },
+  FWPT: { animal: "hamster", body: "#e2b88c", sub: "#fbf1e6", bg: "#f5ebdf", item: "teacup" },
+  FWPI: { animal: "bat",     body: "#4b3d6e", sub: "#8f7fb5", bg: "#e0dbec", item: "bolt", dark: true },
+  FWRT: { animal: "sheep",   body: "#efd9c8", sub: "#ffffff", bg: "#e9e7f3", item: "letter" },
+  FWRI: { animal: "panda",   body: "#f4f0ea", sub: "#2e2230", bg: "#e3dde6", item: "book" },
+  FSPT: { animal: "rabbit",  body: "#f3dde3", sub: "#e8a8b8", bg: "#f6e8ec", item: "flower" },
+  FSPI: { animal: "penguin", body: "#2f3b57", sub: "#f4f0ea", bg: "#dde2ec", item: "arrowheart" },
+  FSRT: { animal: "koala",   body: "#a7afb9", sub: "#e3e7ec", bg: "#e6ecf1", item: "gift" },
+  FSRI: { animal: "deer",    body: "#b5713f", sub: "#f3e0cc", bg: "#f2e0d4", item: "key" },
+};
+const ITEMS = {
+  magnifier: `<circle cx="0" cy="-6" r="11" fill="#e8f2f6" stroke="${INK}" stroke-width="3"/><path d="M8 3 L17 13" stroke="${INK}" stroke-width="5" stroke-linecap="round"/>`,
+  rose: `<path d="M0 2 L0 22" stroke="#3f6e4a" stroke-width="3.5" stroke-linecap="round"/><path d="M0 14 q8 -6 12 0 q-6 4 -12 0z" fill="#4f8a5c" stroke="${INK}" stroke-width="2"/><circle cx="0" cy="-6" r="10" fill="#b81e46" stroke="${INK}" stroke-width="3"/><path d="M-5 -6 q5 -7 10 0 q-5 5 -10 0" fill="none" stroke="#6e0f28" stroke-width="2"/>`,
+  wand: `<path d="M-8 20 L4 -4" stroke="${INK}" stroke-width="4" stroke-linecap="round"/><path d="M6 -20 l4 8 9 1 -7 6 2 9 -8 -5 -8 5 2 -9 -7 -6 9 -1z" fill="#e8c14a" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>`,
+  mask: `<path d="M-18 -8 q9 -6 18 0 q9 -6 18 0 q0 12 -9 13 q-6 0 -9 -6 q-3 6 -9 6 q-9 -1 -9 -13z" fill="#1d1422" stroke="${INK}" stroke-width="2.5"/><ellipse cx="-8" cy="-3" rx="4" ry="2.5" fill="#e9dfe9"/><ellipse cx="8" cy="-3" rx="4" ry="2.5" fill="#e9dfe9"/><path d="M14 0 L22 18" stroke="#b8923e" stroke-width="3" stroke-linecap="round"/>`,
+  mirror: `<ellipse cx="0" cy="-8" rx="11" ry="13" fill="#e2eef3" stroke="#b8923e" stroke-width="4"/><path d="M0 5 L0 22" stroke="#b8923e" stroke-width="5" stroke-linecap="round"/>`,
+  flame: `<path d="M0 20 q-16 -2 -14 -16 q2 -10 9 -16 q0 8 5 10 q2 -10 8 -16 q8 12 6 24 q-2 14 -14 14z" fill="#f07a33" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/><path d="M0 16 q-7 -2 -5 -9 q2 -4 5 -7 q5 6 4 11 q-1 5 -4 5z" fill="#f5c84a"/>`,
+  heart: `<path d="M0 16 C-22 2 -16 -16 -4 -12 Q0 -10 0 -6 Q0 -10 4 -12 C16 -16 22 2 0 16z" fill="#d93a64" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>`,
+  lockheart: `<path d="M-7 -6 v-6 a7 7 0 0 1 14 0 v6" fill="none" stroke="#b8923e" stroke-width="4"/><path d="M0 20 C-22 6 -16 -12 -4 -8 Q0 -6 0 -2 Q0 -6 4 -8 C16 -12 22 6 0 20z" fill="#a81c43" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/><circle cx="0" cy="5" r="3" fill="${INK}"/>`,
+  teacup: `<path d="M-14 -4 h24 v8 a12 12 0 0 1 -24 0z" fill="#fff" stroke="${INK}" stroke-width="3"/><path d="M10 -1 q8 0 7 6 q-1 5 -8 4" fill="none" stroke="${INK}" stroke-width="3"/><path d="M-18 16 h32" stroke="${INK}" stroke-width="3" stroke-linecap="round"/>`,
+  bolt: `<path d="M4 -22 L-12 2 H-1 L-6 22 L12 -4 H1z" fill="#f5c84a" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>`,
+  letter: `<rect x="-16" y="-11" width="32" height="22" rx="3" fill="#fff" stroke="${INK}" stroke-width="3"/><path d="M-16 -9 L0 3 L16 -9" fill="none" stroke="${INK}" stroke-width="2.5"/><circle cx="0" cy="4" r="4" fill="#a81c43"/>`,
+  book: `<path d="M0 -8 q-9 -5 -18 -3 v24 q9 -2 18 3 q9 -5 18 -3 v-24 q-9 -2 -18 3z" fill="#efe7f3" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/><path d="M0 -8 v24" stroke="${INK}" stroke-width="2.5"/><path d="M6 -6 v12 l3 -3 3 3 v-13" fill="#a81c43"/>`,
+  flower: `<g stroke="${INK}" stroke-width="2.5"><circle cx="0" cy="-14" r="7" fill="#e88aa8"/><circle cx="12" cy="-5" r="7" fill="#e88aa8"/><circle cx="8" cy="9" r="7" fill="#e88aa8"/><circle cx="-8" cy="9" r="7" fill="#e88aa8"/><circle cx="-12" cy="-5" r="7" fill="#e88aa8"/><circle cx="0" cy="0" r="6" fill="#f5c84a"/></g>`,
+  arrowheart: `<path d="M0 16 C-22 2 -16 -16 -4 -12 Q0 -10 0 -6 Q0 -10 4 -12 C16 -16 22 2 0 16z" fill="#d93a64" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/><path d="M-22 12 L20 -14" stroke="${INK}" stroke-width="3" stroke-linecap="round"/><path d="M20 -14 l-8 0 m8 0 l-3 7" stroke="${INK}" stroke-width="3" stroke-linecap="round"/>`,
+  gift: `<rect x="-15" y="-6" width="30" height="24" rx="3" fill="#c9708c" stroke="${INK}" stroke-width="3"/><rect x="-17" y="-12" width="34" height="8" rx="2" fill="#dd93ab" stroke="${INK}" stroke-width="3"/><path d="M0 -12 v30" stroke="#e8c14a" stroke-width="5"/>`,
+  key: `<circle cx="0" cy="-10" r="9" fill="none" stroke="#b8923e" stroke-width="5"/><path d="M0 -1 v22 M0 12 h7 M0 18 h5" stroke="#b8923e" stroke-width="5" stroke-linecap="round"/>`,
+};
+const S = `stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"`;
+// Each animal: back (behind head), head (shape), front (markings over the head, under the face).
+function animalParts(a, m) {
+  const b = m.body, s = m.sub;
+  const head = `<circle cx="100" cy="108" r="54" fill="${b}" ${S}/>`;
+  switch (a) {
+    case "owl": return { back: `<path d="M56 76 L50 44 L78 62z M144 76 L150 44 L122 62z" fill="${b}" ${S}/>`, head,
+      front: `<circle cx="80" cy="108" r="20" fill="${s}"/><circle cx="120" cy="108" r="20" fill="${s}"/><path d="M94 122 L100 134 L106 122z" fill="#e0a13a" ${S}/>`, noNose: true, noMouth: true };
+    case "cat": return { back: `<path d="M54 86 L58 40 L88 62z M146 86 L142 40 L112 62z" fill="${b}" ${S}/><path d="M62 74 L63 52 L78 64z M138 74 L137 52 L122 64z" fill="#8a5a7a"/>`, head,
+      front: `<path d="M50 122 L30 118 M50 130 L30 134 M150 122 L170 118 M150 130 L170 134" stroke="#bfb2c4" stroke-width="2.5" stroke-linecap="round"/>` };
+    case "bear": return { back: `<circle cx="60" cy="64" r="16" fill="${b}" ${S}/><circle cx="140" cy="64" r="16" fill="${b}" ${S}/><circle cx="60" cy="64" r="8" fill="${s}"/><circle cx="140" cy="64" r="8" fill="${s}"/>`, head,
+      front: `<ellipse cx="100" cy="132" rx="20" ry="15" fill="${s}"/>` };
+    case "fox": return { back: `<path d="M50 92 L48 34 L86 60z M150 92 L152 34 L114 60z" fill="${b}" ${S}/><path d="M56 78 L55 46 L76 62z M144 78 L145 46 L124 62z" fill="#3a2a2a"/>`,
+      head: `<path d="M46 104 Q46 56 100 54 Q154 56 154 104 Q150 140 100 162 Q50 140 46 104z" fill="${b}" ${S}/>`,
+      front: `<path d="M48 112 Q70 118 100 162 Q130 118 152 112 Q150 140 100 162 Q50 140 48 112z" fill="${s}"/>` };
+    case "lion": {
+      let mane = ""; for (let i = 0; i < 14; i++) { const t = i / 14 * Math.PI * 2; mane += `<circle cx="${(100 + Math.cos(t) * 62).toFixed(1)}" cy="${(108 + Math.sin(t) * 62).toFixed(1)}" r="18" fill="${s}" ${S}/>`; }
+      return { back: mane + `<circle cx="100" cy="108" r="62" fill="${s}"/><circle cx="64" cy="70" r="11" fill="${b}" ${S}/><circle cx="136" cy="70" r="11" fill="${b}" ${S}/>`, head: `<circle cx="100" cy="110" r="48" fill="${b}" ${S}/>`, front: `<ellipse cx="100" cy="134" rx="16" ry="11" fill="#f5dca8"/>` }; }
+    case "dragon": return { back: `<path d="M40 120 Q14 96 22 70 Q36 88 52 92z M160 120 Q186 96 178 70 Q164 88 148 92z" fill="${s}" ${S}/><path d="M70 62 L62 30 L84 56z M130 62 L138 30 L116 56z" fill="#f2e2c4" ${S}/>`, head,
+      front: `<path d="M84 60 l6 -10 6 10 M104 60 l6 -10 6 10" fill="${s}"/><circle cx="92" cy="136" r="2.5" fill="${INK}"/><circle cx="108" cy="136" r="2.5" fill="${INK}"/>`, noNose: true };
+    case "dog": return { back: "", head,
+      front: `<path d="M54 74 Q34 80 36 120 Q40 134 54 126 Q62 100 64 80z M146 74 Q166 80 164 120 Q160 134 146 126 Q138 100 136 80z" fill="${s}" ${S}/><ellipse cx="100" cy="134" rx="18" ry="13" fill="#f6e4c8"/>` };
+    case "wolf": return { back: `<path d="M52 90 L54 36 L86 60z M148 90 L146 36 L114 60z" fill="${b}" ${S}/><path d="M60 76 L61 48 L78 62z M140 76 L139 48 L122 62z" fill="#4d5163"/>`,
+      head: `<path d="M48 104 Q48 56 100 54 Q152 56 152 104 Q150 142 100 160 Q50 142 48 104z" fill="${b}" ${S}/>`,
+      front: `<path d="M74 118 Q100 112 126 118 Q122 150 100 160 Q78 150 74 118z" fill="${s}"/><path d="M84 66 L100 84 L116 66" fill="none" stroke="#55596b" stroke-width="5" stroke-linecap="round"/>` };
+    case "hamster": return { back: `<circle cx="62" cy="62" r="11" fill="${b}" ${S}/><circle cx="138" cy="62" r="11" fill="${b}" ${S}/>`,
+      head: `<ellipse cx="100" cy="112" rx="60" ry="52" fill="${b}" ${S}/>`,
+      front: `<path d="M100 60 Q90 90 100 104 Q110 90 100 60z" fill="${s}"/><ellipse cx="62" cy="130" rx="20" ry="16" fill="${s}"/><ellipse cx="138" cy="130" rx="20" ry="16" fill="${s}"/>` };
+    case "bat": return { back: `<path d="M48 110 Q10 90 8 60 Q24 72 30 64 Q38 80 50 76z M152 110 Q190 90 192 60 Q176 72 170 64 Q162 80 150 76z" fill="${s}" ${S}/><path d="M58 82 L52 30 L90 62z M142 82 L148 30 L110 62z" fill="${b}" ${S}/>`, head,
+      front: `<path d="M94 140 l3 7 3 -7 M100 140 l3 7 3 -7" fill="#fff"/>` , noNose: true };
+    case "sheep": {
+      let wool = ""; [[64,66],[84,52],[106,48],[128,56],[142,74],[56,88],[146,96]].forEach(([x,y]) => wool += `<circle cx="${x}" cy="${y}" r="17" fill="${s}" ${S}/>`);
+      return { back: `<ellipse cx="44" cy="104" rx="18" ry="9" fill="${b}" ${S} transform="rotate(-20 44 104)"/><ellipse cx="156" cy="104" rx="18" ry="9" fill="${b}" ${S} transform="rotate(20 156 104)"/>`,
+        head: `<ellipse cx="100" cy="114" rx="46" ry="50" fill="${b}" ${S}/>`, front: wool }; }
+    case "panda": return { back: `<circle cx="58" cy="66" r="16" fill="${s}" ${S}/><circle cx="142" cy="66" r="16" fill="${s}" ${S}/>`, head,
+      front: `<ellipse cx="78" cy="112" rx="15" ry="19" fill="${s}" transform="rotate(25 78 112)"/><ellipse cx="122" cy="112" rx="15" ry="19" fill="${s}" transform="rotate(-25 122 112)"/>`, lightEyes: true };
+    case "rabbit": return { back: `<path d="M74 70 Q60 20 74 8 Q90 20 88 64z M126 70 Q140 20 126 8 Q110 20 112 64z" fill="${b}" ${S}/><path d="M77 58 Q68 26 75 18 Q84 28 84 58z M123 58 Q132 26 125 18 Q116 28 116 58z" fill="${s}"/>`, head };
+    case "penguin": return { back: "", head,
+      front: `<path d="M100 82 Q84 66 70 80 Q52 104 64 136 Q78 158 100 158 Q122 158 136 136 Q148 104 130 80 Q116 66 100 82z" fill="${s}"/><path d="M92 128 L100 138 L108 128z" fill="#e0a13a" ${S}/>`, noNose: true };
+    case "koala": return { back: `<circle cx="50" cy="80" r="24" fill="${b}" ${S}/><circle cx="150" cy="80" r="24" fill="${b}" ${S}/><circle cx="50" cy="80" r="13" fill="${s}"/><circle cx="150" cy="80" r="13" fill="${s}"/>`, head,
+      front: `<ellipse cx="100" cy="128" rx="11" ry="15" fill="#3a3440"/>`, noNose: true };
+    case "deer": return { back: `<path d="M74 60 Q66 34 74 22 M74 40 L62 32 M126 60 Q134 34 126 22 M126 40 L138 32" stroke="#7a4a2a" stroke-width="6" fill="none" stroke-linecap="round"/><ellipse cx="44" cy="90" rx="22" ry="11" fill="${b}" ${S} transform="rotate(-25 44 90)"/><ellipse cx="156" cy="90" rx="22" ry="11" fill="${b}" ${S} transform="rotate(25 156 90)"/>`, head,
+      front: `<circle cx="80" cy="78" r="4" fill="${s}"/><circle cx="96" cy="70" r="3.5" fill="${s}"/><circle cx="116" cy="74" r="4" fill="${s}"/><ellipse cx="100" cy="136" rx="17" ry="12" fill="${s}"/>` };
+  }
+}
+function mascotSVG(code, size) {
+  const m = MASCOT[code];
+  if (!m) return "";
+  const [lf, ws, , ti] = code.split("");
+  const lead = lf === "L", watch = ws === "W", tender = ti === "T";
+  const A = animalParts(m.animal, m);
+  const line = m.dark ? "#efe4ef" : INK;
+  const eyeInk = A.lightEyes ? "#f4f0ea" : (m.dark ? "#f5c84a" : INK);
+  const p = [];
+  p.push(`<circle cx="100" cy="100" r="96" fill="${m.bg}"/>`);
+  // shoulders
+  p.push(`<path d="M52 200 Q52 156 100 154 Q148 156 148 200z" fill="${m.body}" ${S}/>`);
+  p.push(A.back, A.head, A.front || "");
+  // eyes: W = sharp, half-lidded almond eyes; S = closed sultry eyes with lashes
+  for (const [x, dir] of [[80, -1], [120, 1]]) {
+    if (watch) {
+      p.push(`<path d="M${x - 11} 112 Q${x} 101 ${x + 11} 112 Q${x} 120 ${x - 11} 112z" fill="${eyeInk}"/>`);
+      p.push(`<circle cx="${x + 3 * dir}" cy="111" r="2.2" fill="${A.lightEyes ? INK : "#fff"}"/>`);
+      p.push(`<path d="M${x - 13} 109 Q${x} 99 ${x + 13} 109" stroke="${A.lightEyes ? "#f4f0ea" : line}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`);
+    } else {
+      p.push(`<path d="M${x - 11} 110 Q${x} 118 ${x + 11} 110" stroke="${A.lightEyes ? "#f4f0ea" : line}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`);
+      p.push(`<path d="M${x + 11 * dir} 110 l${5 * dir} -4 M${x + 6 * dir} 114 l${4 * dir} 1" stroke="${A.lightEyes ? "#f4f0ea" : line}" stroke-width="2.5" stroke-linecap="round"/>`);
+    }
+  }
+  // cheeks, subtle
+  p.push(`<ellipse cx="70" cy="128" rx="8" ry="4" fill="#e0607f" opacity=".22"/><ellipse cx="130" cy="128" rx="8" ry="4" fill="#e0607f" opacity=".22"/>`);
+  // nose
+  if (!A.noNose) p.push(`<path d="M95 128 h10 l-5 5z" fill="${m.dark ? "#d9a6c4" : INK}" stroke-linejoin="round"/>`);
+  // mouth: L = one-sided smirk; F = slightly parted lips
+  if (!A.noMouth) {
+    const my = A.noNose ? 142 : 140;
+    if (lead) p.push(`<path d="M92 ${my} q8 4 16 -3" stroke="${line}" stroke-width="3" fill="none" stroke-linecap="round"/>`);
+    else p.push(`<ellipse cx="100" cy="${my + 1}" rx="4" ry="3" fill="#a8314f"/>`);
+  }
+  // neck accessory
+  if (lead && tender) p.push(`<path d="M100 162 l-16 -9 v18z M100 162 l16 -9 v18z" fill="#2e2230"/><circle cx="100" cy="162" r="4" fill="#2e2230"/>`);
+  if (lead && !tender) p.push(`<path d="M94 156 L106 156 L104 162 L110 196 L100 200 L92 194 L98 162z" fill="#a81c43" ${S} transform="rotate(8 100 170)"/>`);
+  if (!lead && tender) p.push(`<path d="M68 158 Q100 168 132 158" stroke="#c45a7c" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M100 164 l-10 -6 v12z M100 164 l10 -6 v12z" fill="#c45a7c"/>`);
+  if (!lead && !tender) p.push(`<path d="M66 158 Q100 170 134 158" stroke="#1d1422" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="100" cy="172" r="6" fill="none" stroke="#b8923e" stroke-width="3"/>`);
+  // item
+  p.push(`<g transform="translate(160 146)">${ITEMS[m.item]}</g>`);
+  return `<svg viewBox="0 0 200 200" width="${size}" height="${size}" role="img" aria-label="${TYPES[code][0]}のイラスト" xmlns="http://www.w3.org/2000/svg"><defs><clipPath id="c${code}${size}"><circle cx="100" cy="100" r="96"/></clipPath></defs><g clip-path="url(#c${code}${size})">${p.join("")}</g></svg>`;
+}
+
+const $ = (id) => document.getElementById(id);
+const answers = new Array(QUESTIONS.length).fill(null);
+
+function show(view) {
+  for (const v of ["intro", "quiz", "result", "admin"]) $("view-" + v).hidden = v !== view;
+  $("tab-quiz").setAttribute("aria-pressed", view !== "admin");
+  $("tab-admin").setAttribute("aria-pressed", view === "admin");
+  window.scrollTo({ top: 0 });
+}
+
+// ---- Quiz ----
+function renderQuestions() {
+  const box = $("questions");
+  box.textContent = "";
+  QUESTIONS.forEach(([, , text], i) => {
+    const q = document.createElement("div");
+    q.className = "q";
+    q.innerHTML = `<div class="q-num">Q${i + 1}</div><div class="q-text"></div>
+      <div class="scale"><span class="end">そう<br>思わない</span><div class="dots" role="radiogroup"></div><span class="end r">そう<br>思う</span></div>`;
+    q.querySelector(".q-text").textContent = text;
+    const dots = q.querySelector(".dots");
+    dots.setAttribute("aria-label", text);
+    for (let v = 1; v <= 5; v++) {
+      const l = document.createElement("label");
+      l.className = "dot";
+      l.innerHTML = `<input type="radio" name="q${i}" id="q${i}-${v}" value="${v}" aria-label="${["そう思わない","あまりそう思わない","どちらでもない","ややそう思う","そう思う"][v-1]}"><span></span>`;
+      l.querySelector("input").addEventListener("change", () => { answers[i] = v; updateProgress(); });
+      dots.appendChild(l);
+    }
+    box.appendChild(q);
+  });
+}
+function updateProgress() {
+  const n = answers.filter((a) => a !== null).length;
+  $("progress-label").textContent = `${n} / ${QUESTIONS.length} 回答済み`;
+  $("progress-bar").style.width = (n / QUESTIONS.length * 100) + "%";
+  $("submit").disabled = n < QUESTIONS.length;
+  $("remain").textContent = n < QUESTIONS.length ? `あと${QUESTIONS.length - n}問` : "";
+}
+
+function score(ans) {
+  const out = {};
+  for (const ax of AXES) {
+    let s = 0, max = 0;
+    QUESTIONS.forEach(([k, dir], i) => { if (k === ax.key) { s += (ans[i] - 3) * dir; max += 2; } });
+    out[ax.key] = Math.round(50 + (s / max) * 50); // % toward pole a
+  }
+  const code = AXES.map((ax) => (out[ax.key] >= 50 ? ax.a : ax.b)).join("");
+  const fet = {};
+  QUESTIONS.forEach(([k], i) => { if (k.startsWith("F:")) fet[k.slice(2)] = ans[i]; });
+  return { code, pct: out, fet };
+}
+
+function renderResult(res, saveState) {
+  const [name, catchCopy, keywords] = TYPES[res.code];
+  const el = $("view-result");
+  el.textContent = "";
+  const card = document.createElement("div");
+  card.className = "card";
+  card.innerHTML = `<div class="eyebrow">あなたのタイプ</div>
+    <div class="hero-art">${mascotSVG(res.code, 200)}</div>
+    <div class="code"></div><h2 class="type-name"></h2><p class="catch" style="font-weight:500"></p>
+    <div class="axes" style="display:flex;flex-direction:column;gap:14px;padding-block:6px"></div>
+    <h3 style="font-size:17px">あなたの惹かれ方</h3><div class="desc" style="display:flex;flex-direction:column;gap:8px"></div>
+    <h3 style="font-size:17px">あなたの刺さりポイント</h3><div class="points dist"></div>
+    <h3 style="font-size:17px">このタイプに刺さりやすいキーワード</h3><div class="chips"></div>
+    <p class="muted">惹かれ方は時期や相手によって変わります。結果をパートナーと話すきっかけにする人も多く、打ち明けた人の約7割が満足度が上がったと答えた調査もあります。何を試すときも、お互いの同意を大切にしてください。</p>
+    <div class="save"></div>
+    <div><button class="ghost" id="retake">もう一度診断する</button></div>`;
+  card.querySelector(".code").textContent = res.code;
+  card.querySelector(".type-name").textContent = name;
+  card.querySelector(".catch").textContent = catchCopy;
+  const axesBox = card.querySelector(".axes");
+  const desc = card.querySelector(".desc");
+  AXES.forEach((ax) => {
+    const p = res.pct[ax.key];
+    const lean = p >= 50 ? ax.a : ax.b;
+    const strength = p >= 50 ? p : 100 - p;
+    const row = document.createElement("div");
+    row.className = "axis";
+    row.innerHTML = `<div class="axis-head"><span></span><span class="muted"></span><span></span></div><div class="bar"><div class="mid"></div><div class="pin"></div></div>`;
+    const [l, mid, r] = row.querySelectorAll(".axis-head span");
+    l.innerHTML = `${ax.a} ${ax.aName}`; r.innerHTML = `${ax.bName} ${ax.b}`;
+    mid.textContent = `${ax.label} ${strength}%`;
+    (p >= 50 ? l : r).innerHTML = `<b>${p >= 50 ? ax.a + " " + ax.aName : ax.bName + " " + ax.b}</b>`;
+    row.querySelector(".pin").style.left = (100 - p) + "%";
+    axesBox.appendChild(row);
+    const d = document.createElement("p");
+    d.textContent = AXIS_TEXT[lean];
+    desc.appendChild(d);
+  });
+  const pts = card.querySelector(".points");
+  const fet = res.fet || {};
+  const ranked = FETISHES.map(([id, label]) => [label, fet[id] || 0]).filter((x) => x[1]).sort((a, b) => b[1] - a[1]);
+  const strong = ranked.filter((x) => x[1] >= 4);
+  if (!ranked.length) { pts.innerHTML = `<p class="muted">前回の結果には刺さりポイントの記録がありません。</p>`; }
+  else if (!strong.length) { pts.innerHTML = `<p class="muted">今回の10項目には、強く刺さるものはありませんでした。決まったフェチよりも、相手や雰囲気で気分が変わるタイプかもしれません。</p>`; }
+  else strong.slice(0, 5).forEach(([label, v]) => {
+    const r = document.createElement("div");
+    r.className = "dist-row";
+    r.innerHTML = `<span></span><div class="track"><div class="fill"></div></div><span class="n"></span>`;
+    r.querySelector("span").textContent = label;
+    r.querySelector(".fill").style.width = (v / 5 * 100) + "%";
+    r.querySelector(".n").textContent = v === 5 ? "強" : "中";
+    pts.appendChild(r);
+  });
+  const chips = card.querySelector(".chips");
+  keywords.forEach((k) => { const c = document.createElement("span"); c.className = "chip"; c.textContent = k; chips.appendChild(c); });
+  const save = card.querySelector(".save");
+  if (saveState) { const n = document.createElement("div"); n.className = "notice"; n.textContent = saveState; save.appendChild(n); }
+  card.querySelector("#retake").addEventListener("click", () => {
+    answers.fill(null); renderQuestions(); updateProgress(); show("quiz");
+  });
+  el.appendChild(card);
+  show("result");
+}
+
+const ENDPOINT = "";
+// ---- Admin ----
+async function loadAdmin(key) {
+  const el = $("view-admin");
+  el.innerHTML = `<div class="card"><p class="muted">結果を読み込んでいます…</p></div>`;
+  try {
+    const r = await fetch(ENDPOINT + "?key=" + encodeURIComponent(key));
+    const data = await r.json();
+    if (data.error) throw new Error(data.error);
+    renderAdmin(data.rows.reverse());
+  } catch (e) {
+    el.innerHTML = `<div class="card"><p>結果を読み込めませんでした。管理者キーと、admin.html に書いたURLが正しいか確認してください。</p></div>`;
+  }
+}
+function renderAdmin(rows) {
+  const el = $("view-admin");
+  el.textContent = "";
+  const total = rows.length;
+  const counts = {};
+  for (const c of Object.keys(TYPES)) counts[c] = 0;
+  rows.forEach((r) => { if (counts[r.code] !== undefined) counts[r.code]++; });
+  const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  const avg = {};
+  AXES.forEach((ax) => { avg[ax.key] = total ? Math.round(rows.reduce((s, r) => s + (r.pct?.[ax.key] ?? 50), 0) / total) : null; });
+
+  const summary = document.createElement("div");
+  summary.className = "card";
+  summary.innerHTML = `<h2>結果一覧</h2><div class="stats"></div><p class="muted">回答は匿名で、1人につき最新の1件を集計しています。名前や回答日時は表示しません。</p>`;
+  const stats = summary.querySelector(".stats");
+  const addStat = (label, value) => { const s = document.createElement("div"); s.className = "stat"; s.innerHTML = `<span class="muted"></span><b></b>`; s.querySelector("span").textContent = label; s.querySelector("b").textContent = value; stats.appendChild(s); };
+  addStat("回答者数", total + "人");
+  addStat("いちばん多いタイプ", total && top[1] ? `${top[0]}(${top[1]}人)` : "—");
+  AXES.forEach((ax) => addStat(`平均:${ax.label}`, avg[ax.key] === null ? "—" : (avg[ax.key] >= 50 ? `${ax.a} ${avg[ax.key]}%` : `${ax.b} ${100 - avg[ax.key]}%`)));
+  el.appendChild(summary);
+
+  if (!total) {
+    const empty = document.createElement("div");
+    empty.className = "card";
+    empty.innerHTML = `<p>まだ回答はありません。誰かが診断を終えると、ここにタイプの分布と一人ずつの結果が表示されます。</p>`;
+    el.appendChild(empty);
+    return;
+  }
+
+  const distCard = document.createElement("div");
+  distCard.className = "card";
+  distCard.innerHTML = `<h3 style="font-size:17px">タイプの分布</h3><div class="dist"></div>`;
+  const dist = distCard.querySelector(".dist");
+  const maxN = Math.max(1, ...Object.values(counts));
+  Object.entries(counts).sort((a, b) => b[1] - a[1]).forEach(([code, n]) => {
+    const r = document.createElement("div");
+    r.className = "dist-row";
+    r.innerHTML = `<span></span><div class="track"><div class="fill"></div></div><span class="n"></span>`;
+    const who = r.querySelector("span");
+    who.className = "who";
+    who.innerHTML = mascotSVG(code, 28);
+    who.append(`${code} ${TYPES[code][0]}`);
+    r.querySelector(".fill").style.width = (n / maxN * 100) + "%";
+    r.querySelector(".n").textContent = n;
+    dist.appendChild(r);
+  });
+  el.appendChild(distCard);
+
+  const fetCard = document.createElement("div");
+  fetCard.className = "card";
+  fetCard.innerHTML = `<h3 style="font-size:17px">刺さりポイントの平均(5段階)</h3><div class="dist"></div>`;
+  const fd = fetCard.querySelector(".dist");
+  FETISHES.map(([id, label]) => {
+    const vals = rows.map((r) => r.fet?.[id]).filter((v) => typeof v === "number");
+    return [label, vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null];
+  }).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0)).forEach(([label, v]) => {
+    const r = document.createElement("div");
+    r.className = "dist-row";
+    r.innerHTML = `<span></span><div class="track"><div class="fill"></div></div><span class="n"></span>`;
+    r.querySelector("span").textContent = label;
+    r.querySelector(".fill").style.width = (v === null ? 0 : (v - 1) / 4 * 100) + "%";
+    r.querySelector(".n").textContent = v === null ? "—" : v.toFixed(1);
+    fd.appendChild(r);
+  });
+  el.appendChild(fetCard);
+
+  const listCard = document.createElement("div");
+  listCard.className = "card";
+  listCard.innerHTML = `<h3 style="font-size:17px">回答ごとの結果(匿名)</h3><div class="table-wrap"><table><thead><tr><th>No.</th><th>タイプ</th>${AXES.map((a) => `<th>${a.a}/${a.b}</th>`).join("")}<th>刺さりポイント上位</th></tr></thead><tbody></tbody></table></div><p class="muted">各軸の数値は左側(L・W・P・T)寄りの度合いです。50%より上なら左側、下なら右側のタイプになります。</p>`;
+  const tb = listCard.querySelector("tbody");
+  rows.forEach((r, i) => {
+    const tr = document.createElement("tr");
+    const cells = [String(i + 1), `${r.code} ${TYPES[r.code]?.[0] ?? ""}`, ...AXES.map((a) => (r.pct?.[a.key] ?? "—") + "%"),
+      FETISHES.filter(([id]) => (r.fet?.[id] ?? 0) >= 4).sort((a, b) => r.fet[b[0]] - r.fet[a[0]]).slice(0, 3).map((x) => x[1]).join("、") || "—"];
+    cells.forEach((c) => { const td = document.createElement("td"); td.textContent = c; tr.appendChild(td); });
+    tb.appendChild(tr);
+  });
+  el.appendChild(listCard);
+}
+
+$("login").addEventListener("submit", (e) => {
+  e.preventDefault();
+  if (!ENDPOINT) { $("view-admin").innerHTML = `<div class="card"><p>admin.html の ENDPOINT にURLを設定してください。</p></div>`; return; }
+  loadAdmin($("key").value);
+});
+</script>
+
+</body>
+</html>
